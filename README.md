@@ -89,7 +89,7 @@ res.franchissements.to_file("franchissements.gpkg")
    - ≥ 0,6 : *ouvrage manquant probable*, corrigé dans le MNT
    - 0,3 à 0,6 : *à vérifier*
    - < 0,3 : *écoulement libre*
-6. **Correction** : entre les points bas amont et aval, le MNT est abaissé selon une droite (chenal de 3 cellules). Le MNT n'est jamais relevé.
+6. **Correction (breaching)** : un chenal suit le thalweg réel, cellule par cellule, du point bas amont au point bas aval. Le long de ce chemin, l'altitude est rendue non croissante. Seules les cellules qui bloquent l'écoulement sont abaissées : le MNT n'est jamais relevé, aucun creux n'est créé et les cuvettes naturelles voisines (mares, plaine alluviale) ne sont pas agrandies.
 7. **Validation** : les franchissements sont croisés avec les buses (`tunnel=culvert`) et les ponts (`bridge=*`) d'OpenStreetMap, ainsi qu'avec l'attribut « position par rapport au sol » de la BD TOPO.
 
 ## Données

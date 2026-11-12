@@ -73,6 +73,21 @@ def test_trace_decale_du_thalweg_ne_cree_pas_de_trou(decalage):
     assert res.resume()["reduction_volume_cuvettes_pct"] > 95
 
 
+def test_mare_naturelle_en_aval_n_est_pas_agrandie():
+    """Cas réel : le point bas aval tombe dans une cuvette naturelle de la plaine alluviale.
+
+    La correction draine le faux barrage sans agrandir la mare (son volume doit rester inchangé).
+    """
+    mnt, transform, cours_eau, infras, osm = scene(decalage_trace=2.0, mare_aval=True)
+    res = analyser(mnt, transform, cours_eau, infras, osm)
+    assert res.franchissements["corrige"].sum() == 1
+    aval = np.zeros(mnt.shape, dtype=bool)
+    aval[:, 110:145] = True  # zone de la mare, en aval de la route n°1
+    vol = res.surface_cellule
+    assert np.nansum(res.profondeur_apres[aval]) * vol <= np.nansum(res.profondeur_avant[aval]) * vol + 1e-6
+    assert res.volume_apres_m3 < 0.2 * res.volume_avant_m3
+
+
 def test_correction_ne_releve_jamais_le_mnt(resultat):
     assert np.all(resultat.mnt_corrige <= resultat.mnt + 1e-9)
 

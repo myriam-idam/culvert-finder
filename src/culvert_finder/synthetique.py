@@ -13,11 +13,13 @@ from shapely.geometry import LineString
 from culvert_finder.data import CRS_L93
 
 
-def scene(taille: int = 200, res: float = 1.0, decalage_trace: float = 0.0):
+def scene(taille: int = 200, res: float = 1.0, decalage_trace: float = 0.0, mare_aval: bool = False):
     """Renvoie (mnt, transform, cours_eau, infrastructures, ouvrages_osm).
 
     `decalage_trace` décale le tracé vectoriel du cours d'eau par rapport au thalweg du
     MNT, comme c'est souvent le cas entre la BD TOPO et le LiDAR.
+    `mare_aval` ajoute une cuvette naturelle juste en aval de la route n°1 (fréquent
+    en plaine alluviale) : la correction ne doit pas l'agrandir.
 
     - vallée en V orientée ouest → est, pente 1 % ;
     - route n°1 (x = 100) : remblai de 12 m d'altitude **sans ouverture** → faux barrage ;
@@ -35,6 +37,9 @@ def scene(taille: int = 200, res: float = 1.0, decalage_trace: float = 0.0):
     mnt[remblai1] = np.maximum(mnt[remblai1], 12.0)
     remblai2 = (np.abs(x - 150) <= 5) & (np.abs(y - axe_y) > 6)
     mnt[remblai2] = np.maximum(mnt[remblai2], 12.0)
+    if mare_aval:
+        mare = (np.abs(x - 125) <= 4) & (np.abs(y - axe_y) <= 4)
+        mnt[mare] -= 0.4
 
     cours_eau = gpd.GeoDataFrame(
         {"nature": ["Cours d'eau"]},
