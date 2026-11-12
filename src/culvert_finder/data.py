@@ -19,7 +19,11 @@ log = logging.getLogger(__name__)
 CRS_L93 = "EPSG:2154"
 WFS_URL = "https://data.geopf.fr/wfs/ows"
 WMS_URL = "https://data.geopf.fr/wms-r/wms"
-OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+OVERPASS_URLS = (
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+    "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+)
 COUCHE_MNT = "ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES"  # RGE ALTI 1 m
 USER_AGENT = "culvert-finder/0.1 (https://github.com/myriam-idam/culvert-finder)"
 
@@ -128,13 +132,18 @@ def telecharger_ouvrages_osm(emprise: Emprise) -> gpd.GeoDataFrame:
         f'way["bridge"]["bridge"!="no"]({bb}););out geom;'
     )
     colonnes = ("type_ouvrage", "osm_id")
-    try:
-        with _session() as s:
-            r = s.post(OVERPASS_URL, data={"data": requete}, timeout=120)
-            r.raise_for_status()
-            elements = r.json().get("elements", [])
-    except (requests.RequestException, ValueError) as exc:
-        log.warning("OpenStreetMap indisponible, analyse sans ouvrages OSM (%s)", exc)
+    elements = None
+    with _session() as s:
+        for url in OVERPASS_URLS:  # serveurs publics parfois saturés : on essaie les miroirs
+            try:
+                r = s.post(url, data={"data": requete}, timeout=120)
+                r.raise_for_status()
+                elements = r.json().get("elements", [])
+                break
+            except (requests.RequestException, ValueError) as exc:
+                log.warning("Overpass %s indisponible (%s)", url, exc)
+    if elements is None:
+        log.warning("OpenStreetMap indisponible, analyse sans ouvrages OSM")
         return gdf_vide(colonnes)
     lignes = []
     for el in elements:

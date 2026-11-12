@@ -15,7 +15,7 @@ from culvert_finder import data
 from culvert_finder.config import Parametres
 from culvert_finder.correction import creuser
 from culvert_finder.detection import calculer_indicateurs, fusionner_cours_eau, trouver_franchissements
-from culvert_finder.mnt import mnt_thalweg, profondeur_cuvettes
+from culvert_finder.mnt import lignes_colonnes, mnt_thalweg, profondeur_cuvettes
 from culvert_finder.score import scorer
 
 log = logging.getLogger(__name__)
@@ -32,10 +32,16 @@ class Resultat:
     profondeur_avant: np.ndarray
     profondeur_apres: np.ndarray
     params: Parametres = field(default_factory=Parametres)
+    zone_corrigee: np.ndarray | None = None  # cellules proches des franchissements corrigés
 
     @property
     def surface_cellule(self) -> float:
         return abs(self.transform.a * self.transform.e)
+
+    def _volume_local(self, prof: np.ndarray) -> float:
+        if self.zone_corrigee is None or not self.zone_corrigee.any():
+            return 0.0
+        return float(np.nansum(prof[self.zone_corrigee]) * self.surface_cellule)
 
     @property
     def volume_avant_m3(self) -> float:
@@ -47,15 +53,19 @@ class Resultat:
 
     def resume(self) -> dict:
         f = self.franchissements
-        reduction = 100 * (1 - self.volume_apres_m3 / self.volume_avant_m3) if self.volume_avant_m3 else 0.0
+        loc_av, loc_ap = self._volume_local(self.profondeur_avant), self._volume_local(self.profondeur_apres)
         return {
             "franchissements": int(len(f)),
             "par_classe": {k: int(v) for k, v in f["classe"].value_counts().items()} if len(f) else {},
             "corriges_dans_mnt": int(f["corrige"].sum()) if len(f) else 0,
             "confirmes_par_osm": int((f["corrige"] & f["ouvrage_osm"]).sum()) if len(f) else 0,
-            "volume_cuvettes_avant_m3": round(self.volume_avant_m3, 1),
-            "volume_cuvettes_apres_m3": round(self.volume_apres_m3, 1),
-            "reduction_volume_cuvettes_pct": round(reduction, 1),
+            # Autour des franchissements corrigés (rayon_cuvette) : effet direct de la correction
+            "volume_cuvettes_franchissements_avant_m3": round(loc_av, 1),
+            "volume_cuvettes_franchissements_apres_m3": round(loc_ap, 1),
+            "reduction_volume_cuvettes_pct": round(100 * (1 - loc_ap / loc_av), 1) if loc_av else 0.0,
+            # Sur toute la zone (inclut les cuvettes naturelles : mares, carrières…)
+            "volume_cuvettes_total_avant_m3": round(self.volume_avant_m3, 1),
+            "volume_cuvettes_total_apres_m3": round(self.volume_apres_m3, 1),
         }
 
 
@@ -89,7 +99,13 @@ def analyser(
     franch["corrige"] = corriges
     prof_apres = profondeur_cuvettes(mnt_corr)
 
-    return Resultat(mnt, mnt_corr, transform, franch, lignes, infras, prof_avant, prof_apres, params)
+    zone = np.zeros(mnt.shape, dtype=bool)
+    k = max(1, int(round(params.rayon_cuvette / res)))
+    for p in franch.geometry[franch["corrige"]]:
+        (r,), (c,) = lignes_colonnes(transform, [p.x], [p.y])
+        zone[max(r - k, 0) : r + k + 1, max(c - k, 0) : c + k + 1] = True
+
+    return Resultat(mnt, mnt_corr, transform, franch, lignes, infras, prof_avant, prof_apres, params, zone)
 
 
 def executer(

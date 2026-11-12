@@ -131,7 +131,7 @@ def ecrire_rapport(res, sortie: str | Path) -> Path:
         ("Franchissements analysés", resume["franchissements"]),
         ("Ouvrages manquants probables", resume["par_classe"].get(CLASSE_PROBABLE, 0)),
         ("Dont confirmés par OSM", resume["confirmes_par_osm"]),
-        ("Réduction du volume de cuvettes", f'{resume["reduction_volume_cuvettes_pct"]} %'),
+        ("Cuvettes supprimées au droit des ouvrages", f'{resume["reduction_volume_cuvettes_pct"]} %'),
     ]
     kpi = "".join(f'<div class="kpi"><b>{v}</b><span>{k}</span></div>' for k, v in cartes_kpi)
 

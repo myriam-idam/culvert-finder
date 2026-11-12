@@ -13,8 +13,11 @@ from shapely.geometry import LineString
 from culvert_finder.data import CRS_L93
 
 
-def scene(taille: int = 200, res: float = 1.0):
+def scene(taille: int = 200, res: float = 1.0, decalage_trace: float = 0.0):
     """Renvoie (mnt, transform, cours_eau, infrastructures, ouvrages_osm).
+
+    `decalage_trace` décale le tracé vectoriel du cours d'eau par rapport au thalweg du
+    MNT, comme c'est souvent le cas entre la BD TOPO et le LiDAR.
 
     - vallée en V orientée ouest → est, pente 1 % ;
     - route n°1 (x = 100) : remblai de 12 m d'altitude **sans ouverture** → faux barrage ;
@@ -34,7 +37,9 @@ def scene(taille: int = 200, res: float = 1.0):
     mnt[remblai2] = np.maximum(mnt[remblai2], 12.0)
 
     cours_eau = gpd.GeoDataFrame(
-        {"nature": ["Cours d'eau"]}, geometry=[LineString([(0, axe_y), (taille * res, axe_y)])], crs=CRS_L93
+        {"nature": ["Cours d'eau"]},
+        geometry=[LineString([(0, axe_y + decalage_trace), (taille * res, axe_y + decalage_trace)])],
+        crs=CRS_L93,
     )
     infras = gpd.GeoDataFrame(
         {"type_infra": ["route", "route"], "position_par_rapport_au_sol": ["0", "0"]},

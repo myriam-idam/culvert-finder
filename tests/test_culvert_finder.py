@@ -60,6 +60,19 @@ def test_correction_supprime_la_cuvette(resultat):
     assert resultat.resume()["reduction_volume_cuvettes_pct"] > 95
 
 
+@pytest.mark.parametrize("decalage", [1.5, 2.5])
+def test_trace_decale_du_thalweg_ne_cree_pas_de_trou(decalage):
+    """Cas réel : le tracé BD TOPO passe à côté du thalweg LiDAR.
+
+    Les extrémités du chenal doivent rejoindre le vrai point bas, sans créer de cuvette.
+    """
+    mnt, transform, cours_eau, infras, osm = scene(decalage_trace=decalage)
+    res = analyser(mnt, transform, cours_eau, infras, osm)
+    assert res.franchissements["corrige"].sum() == 1
+    assert res.volume_apres_m3 < 0.05 * res.volume_avant_m3
+    assert res.resume()["reduction_volume_cuvettes_pct"] > 95
+
+
 def test_correction_ne_releve_jamais_le_mnt(resultat):
     assert np.all(resultat.mnt_corrige <= resultat.mnt + 1e-9)
 
