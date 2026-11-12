@@ -35,6 +35,27 @@ Zone d'étude ──► MNT RGE ALTI + BD TOPO (IGN) + OpenStreetMap
 | `cuvettes_avant.tif` / `cuvettes_apres.tif` | Hauteur d'eau stagnante avant et après correction |
 | `rapport.html` | Carte, profil en long avant/après, tableau, indicateurs clés |
 
+## Résultat sur une zone réelle
+
+Zone de 2 km × 2 km près de Vitré (Ille-et-Vilaine), avec les données IGN et OpenStreetMap téléchargées automatiquement, analysée en moins de 2 minutes :
+
+| Indicateur | Valeur |
+|---|---|
+| Franchissements cours d'eau × routes / voies ferrées analysés | 14 |
+| Ouvrages manquants probables (corrigés dans le MNT) | 1 |
+| Franchissements à vérifier | 4 |
+| Volume de cuvettes artificielles supprimé au droit de l'ouvrage | **−81 %** (146 → 27 m³) |
+
+![Carte des franchissements](docs/img/zone_carte.png)
+
+**Profil en long au franchissement détecté :** le remblai routier (1,4 m) bloquait l'écoulement dans le MNT. Après correction, l'eau s'écoule de façon continue de l'amont vers l'aval.
+
+![Profil en long avant / après](docs/img/zone_profil.png)
+
+**Contrôle de cohérence avec OpenStreetMap :** les franchissements où une buse est déjà cartographiée ont presque tous un score bas, car le MNT y montre déjà le passage de l'eau. Le franchissement détecté n'a aucun ouvrage connu à moins de 58 m : c'est un point à vérifier en priorité sur le terrain.
+
+![Cuvettes avant / après](docs/img/zone_cuvettes.png)
+
 ## Installation
 
 ```bash
