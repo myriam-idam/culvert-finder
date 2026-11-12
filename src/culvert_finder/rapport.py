@@ -13,7 +13,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
-from culvert_finder.mnt import profil_en_long  # noqa: E402
+from culvert_finder.mnt import mnt_thalweg, profil_en_long  # noqa: E402
 from culvert_finder.score import CLASSE_LIBRE, CLASSE_PROBABLE, CLASSE_VERIFIER  # noqa: E402
 
 COULEURS = {CLASSE_PROBABLE: "#d62728", CLASSE_VERIFIER: "#ff7f0e", CLASSE_LIBRE: "#2ca02c"}
@@ -87,15 +87,17 @@ def figure_profil(res) -> bytes | None:
     ligne = sel.iloc[0]
     trace = res.lignes_cours_eau[int(ligne["indice_cours_eau"])]
     d = res.params.demi_longueur_profil * 1.5
-    off, _, _, z_brut = profil_en_long(trace, ligne.geometry, res.mnt, res.transform, d)
-    _, _, _, z_corr = profil_en_long(trace, ligne.geometry, res.mnt_corrige, res.transform, d)
+    # Profil du thalweg : point bas à ± rayon_thalweg du tracé BD TOPO, là où passe le chenal
+    k = int(round(res.params.rayon_thalweg / abs(res.transform.a)))
+    off, _, _, z_brut = profil_en_long(trace, ligne.geometry, mnt_thalweg(res.mnt, k), res.transform, d)
+    _, _, _, z_corr = profil_en_long(trace, ligne.geometry, mnt_thalweg(res.mnt_corrige, k), res.transform, d)
     fig, ax = plt.subplots(figsize=(9, 4))
     ax.plot(off, z_brut, color="#7f7f7f", label="MNT brut (remblai = faux barrage)")
     ax.plot(off, z_corr, color="#1f77b4", linewidth=2, label="MNT corrigé (ouvrage restitué)")
     ax.axvspan(-res.params.demi_largeur_remblai, res.params.demi_largeur_remblai, color="#ffdd99", alpha=0.4,
                label=ligne["type_infra"])
     ax.set_xlabel("Distance le long du cours d'eau (m)")
-    ax.set_ylabel("Altitude (m)")
+    ax.set_ylabel(f"Altitude du thalweg (m, point bas à ±{res.params.rayon_thalweg:g} m)")
     ax.set_title(f"Profil en long au franchissement le plus probable (score {ligne['score']:.2f})")
     ax.legend(fontsize=8)
     ax.grid(alpha=0.3)
