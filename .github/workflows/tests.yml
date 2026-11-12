@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: pytest -v
+      - run: culvert-finder demo --sortie sortie_demo
+      - if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultats-demo
+          path: |
+            sortie_demo/rapport.html
+            sortie_demo/*.png
+            sortie_demo/resume.json

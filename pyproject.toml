@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "culvert-finder"
+version = "0.1.0"
+description = "Détection automatique des ouvrages hydrauliques manquants (buses, ponts) dans les MNT LiDAR et correction du MNT pour la modélisation hydraulique."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [{ name = "myriam-idam" }]
+keywords = ["hydraulique", "MNT", "LiDAR", "SIG", "hydrologie", "IGN", "buse", "HEC-RAS"]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "scikit-image>=0.21",
+    "rasterio>=1.3",
+    "geopandas>=0.14",
+    "shapely>=2.0",
+    "pyproj>=3.5",
+    "requests>=2.28",
+    "matplotlib>=3.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+culvert-finder = "culvert_finder.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

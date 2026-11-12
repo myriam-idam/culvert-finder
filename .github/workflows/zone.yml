@@ -1,0 +1,35 @@
+name: Analyse d'une zone réelle
+
+on:
+  workflow_dispatch:
+    inputs:
+      lon:
+        description: "Longitude du centre (WGS84)"
+        default: "-1.25"
+      lat:
+        description: "Latitude du centre (WGS84)"
+        default: "48.12"
+      taille:
+        description: "Côté de la zone (m)"
+        default: "2000"
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - run: >
+          culvert-finder analyse --point ${{ inputs.lon }} ${{ inputs.lat }}
+          --taille ${{ inputs.taille }} --sortie sortie_zone
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resultats-zone
+          path: |
+            sortie_zone/rapport.html
+            sortie_zone/*.png
+            sortie_zone/resume.json
+            sortie_zone/culvert_finder.gpkg
