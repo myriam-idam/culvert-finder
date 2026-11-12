@@ -25,5 +25,7 @@ class Parametres:
     seuil_correction: float = 0.6
     # Score à partir duquel un franchissement est signalé « à vérifier »
     seuil_verification: float = 0.3
-    # Demi-largeur (en cellules) du chenal creusé dans le MNT
-    demi_largeur_chenal: int = 1
+    # Demi-largeur (en cellules) du chenal ouvert dans le MNT. 0 = chenal d'une cellule,
+    # comme une buse. Au-delà, les cellules voisines du chenal peuvent agrandir une
+    # cuvette naturelle adjacente (mare, plaine alluviale).
+    demi_largeur_chenal: int = 0
